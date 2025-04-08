@@ -1,8 +1,10 @@
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain.chains import RetrievalQA
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 from langchain.text_splitter import CharacterTextSplitter
 from dotenv import load_dotenv
 import os
@@ -75,14 +77,31 @@ with st.sidebar:
                     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
                     split_docs = text_splitter.split_documents(documents)
                     
+                    # Create embeddings and vector store
                     embeddings = OpenAIEmbeddings()
-                    vector_store = FAISS.from_documents(split_docs, embeddings)
+                    vector_store = Chroma.from_documents(
+                        documents=split_docs,
+                        embedding=embeddings,
+                        persist_directory="chroma_db"
+                    )
+                    
                     retriever = vector_store.as_retriever()
                     llm = ChatOpenAI(model="gpt-3.5-turbo")
                     
-                    st.session_state.qa_chain = RetrievalQA.from_chain_type(
-                        llm=llm,
-                        retriever=retriever
+                    # Create the QA chain
+                    template = """Answer the question based on the following context:
+                    {context}
+                    
+                    Question: {question}
+                    """
+                    
+                    prompt = ChatPromptTemplate.from_template(template)
+                    
+                    st.session_state.qa_chain = (
+                        {"context": retriever, "question": RunnablePassthrough()}
+                        | prompt
+                        | llm
+                        | StrOutputParser()
                     )
                     
                     # Clean up the temporary file
@@ -117,7 +136,7 @@ if st.session_state.qa_chain is not None:
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
-                    response = st.session_state.qa_chain.run(prompt)
+                    response = st.session_state.qa_chain.invoke(prompt)
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 except Exception as e:
