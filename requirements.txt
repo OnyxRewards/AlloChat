@@ -2,7 +2,8 @@ streamlit==1.44.1
 langchain==0.1.12
 langchain-community==0.0.28
 langchain-openai==0.0.8
-faiss-cpu==1.7.4
+faiss-cpu==1.7.3
 pypdf==5.4.0
 python-dotenv==1.1.0
-openai==1.14.2 
+openai==1.14.2
+numpy==1.24.3 
