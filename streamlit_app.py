@@ -15,6 +15,12 @@ load_dotenv()
 # Get API key from environment or Streamlit secrets
 api_key = os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"]
 
+# Initialize embeddings with the API key
+embeddings = OpenAIEmbeddings(
+    openai_api_key=api_key,
+    model="text-embedding-3-small"
+)
+
 # Set page config
 st.set_page_config(
     page_title="AlloChat - Document Q&A",
@@ -81,7 +87,6 @@ with st.sidebar:
                     split_docs = text_splitter.split_documents(documents)
                     
                     # Create embeddings and vector store
-                    embeddings = OpenAIEmbeddings(api_key=api_key)
                     vector_store = Chroma.from_documents(
                         documents=split_docs,
                         embedding=embeddings,
