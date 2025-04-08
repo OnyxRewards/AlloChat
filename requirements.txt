@@ -1,7 +1,8 @@
 streamlit==1.44.1
 langchain-core==0.1.31
-langchain-community==0.0.28
+langchain-community==0.3.21
 langchain-openai==0.0.8
+langchain-text-splitters==0.0.1
 chromadb==0.4.24
 pypdf==5.4.0
 python-dotenv==1.1.0
