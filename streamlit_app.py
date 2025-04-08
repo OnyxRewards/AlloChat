@@ -12,6 +12,9 @@ import os
 # Load environment variables
 load_dotenv()
 
+# Get API key from environment or Streamlit secrets
+api_key = os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"]
+
 # Set page config
 st.set_page_config(
     page_title="AlloChat - Document Q&A",
@@ -78,15 +81,19 @@ with st.sidebar:
                     split_docs = text_splitter.split_documents(documents)
                     
                     # Create embeddings and vector store
-                    embeddings = OpenAIEmbeddings()
+                    embeddings = OpenAIEmbeddings(api_key=api_key)
                     vector_store = Chroma.from_documents(
                         documents=split_docs,
                         embedding=embeddings,
-                        persist_directory="chroma_db"
+                        collection_name="pdf_collection"
                     )
                     
                     retriever = vector_store.as_retriever()
-                    llm = ChatOpenAI(model="gpt-3.5-turbo")
+                    llm = ChatOpenAI(
+                        model="gpt-3.5-turbo",
+                        temperature=0.7,
+                        api_key=api_key
+                    )
                     
                     # Create the QA chain
                     template = """Answer the question based on the following context:
